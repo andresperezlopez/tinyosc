@@ -272,7 +272,7 @@ void tosc_printOscBuffer(char *buffer, const int len) {
 }
 
 void tosc_printMessage(tosc_message *osc) {
-  printf("[%i bytes] %s %s",
+  printf("[%i bytes] %s %s *** ",
       osc->len, // the number of bytes in the OSC message
       tosc_getAddress(osc), // the OSC address string, e.g. "/button1"
       tosc_getFormat(osc)); // the OSC format string, e.g. "f"
@@ -306,4 +306,92 @@ void tosc_printMessage(tosc_message *osc) {
     }
   }
   printf("\n");
+}
+
+
+//  ******************************************************* //
+//                                                          //
+//  Functions added by Andres Pérez López on 22/07/16       //
+//                                                          //
+//  ******************************************************* //
+
+uint32_t tosc_writeHeader(char *buffer, const int len,
+                          const char *address, const char *format) {
+  memset(buffer, 0, len); // clear the buffer
+  uint32_t i = (uint32_t) strlen(address);
+  if (address == NULL || i >= len) return -1;
+  strcpy(buffer, address);
+  i = (i + 4) & ~0x3;
+  buffer[i++] = ',';
+  int s_len = (int) strlen(format);
+  if (format == NULL || (i + s_len) >= len) return -2;
+  strcpy(buffer+i, format);
+  i = (i + 4 + s_len) & ~0x3;
+  return i;
+}
+
+uint32_t tosc_headerAppendInt(char *buffer, int index, const int len, int value) {
+  if (index + 4 > len) return -3;
+  *((uint32_t *) (buffer+index)) = htonl(value);
+  index += 4;
+  return index;
+}
+
+uint32_t tosc_headerAppendFloat(char *buffer, int index, const int len, float value) {
+  if (index + 4 > len) return -3;
+  *((uint32_t *) (buffer+index)) = htonl(*((uint32_t *) &value));
+  index += 4;
+  return index;
+}
+
+uint32_t tosc_headerAppendString(char *buffer, int index, const int len, const char* str) {
+  int s_len = (int) strlen(str);
+  if (index + s_len >= len) return -3;
+  strcpy(buffer+index, str);
+  index = (index + 4 + s_len) & ~0x3;
+  return index;
+}
+
+
+uint32_t tosc_sendOscMessage(char* oscBuffer, int oscBufferLenght, const char* localHostname, int localPort, const char* remoteHostname, int remotePort) {
+  
+  int  fd;
+  struct sockaddr_in sa_dst;
+  struct sockaddr_in sa_loc;
+  
+  fd = socket(AF_INET, SOCK_DGRAM, 0);
+  
+  //   Local
+  memset(&sa_loc, 0, sizeof(struct sockaddr_in));
+  sa_loc.sin_family = AF_INET;
+  sa_loc.sin_port = htons(localPort);
+  sa_loc.sin_addr.s_addr = inet_addr(localHostname);
+  
+  if (bind(fd, (struct sockaddr *)&sa_loc, sizeof(struct sockaddr)) == -1) {
+    perror("Cannot bind local addr\n");
+    printf("ERROR connecting: errno %d\n",errno);
+    close(fd);
+    return errno;
+  } else {
+//    printf("local addr bind ok\n");
+  }
+  
+  // Remote
+  memset(&sa_dst, 0, sizeof(struct sockaddr_in));
+  sa_dst.sin_family = AF_INET;
+  sa_dst.sin_port = htons(remotePort);
+  sa_dst.sin_addr.s_addr = inet_addr(remoteHostname);
+  
+  if (connect(fd, (struct sockaddr *)&sa_dst, sizeof(struct sockaddr)) == -1) {
+    perror("Cannot bind remote addr\n");
+    printf("ERROR connecting: errno %d\n",errno);
+    close(fd);
+    return errno;
+  } else {
+//    printf("local addr remote ok\n");
+  }
+  
+  send(fd, oscBuffer, oscBufferLenght, 0);
+  close(fd);
+  return 0;
 }
