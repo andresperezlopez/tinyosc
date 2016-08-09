@@ -1,3 +1,16 @@
+# Edit
+Small functionalities added: 
+- methods for creating an OSC packet procedurally (tosc_writeHeader, tosc_headerAppendInt, tosc_headerAppendFloat, tosc_headerAppendString)
+- convenience method for actually sending the packet (tosc_sendOscMessage)
+
+TODO
+- implement headerAppend_ methods for all OSC data types
+- ...
+- 
+Andrés Pérez López
+
+-------------------------------------
+
 # TinyOSC
 
 TinyOSC is a minimal [Open Sound Control](http://opensoundcontrol.org/) (OSC) library written in C. The typical use case is to parse a raw buffer received directly from a socket. Given the limited nature of the library it also tends to be quite fast. It doesn't hold on to much state and it doesn't do much error checking. If you have a good idea of what OSC packets you will receive and need to process them quickly, this library might be for you.
