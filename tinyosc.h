@@ -19,6 +19,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <errno.h>
 
 #define TINYOSC_TIMETAG_IMMEDIATELY 1L
 
@@ -164,6 +165,48 @@ void tosc_printOscBuffer(char *buffer, const int len);
  * to stdout.
  */
 void tosc_printMessage(tosc_message *o);
+  
+  
+  //  ******************************************************* //
+  //                                                          //
+  //  Functions added by Andres Pérez López on 22/07/16       //
+  //                                                          //
+  //  ******************************************************* //
+  
+/**
+ * Writes an OSC header to a buffer of size len. Returns the total number of bytes written.
+ * The entire buffer is cleared before writing.
+ */
+uint32_t tosc_writeHeader(char *buffer, const int len, const char *address, const char *format);
+  
+/**
+ * Appends an int to an OSC packet header previously created by tosc_writeHeader
+ * at the position given by index.
+ * Returns the total number of bytes written in the whole packet.
+ */
+uint32_t tosc_headerAppendInt(char *buffer, int index, const int len, int value);
+  
+/**
+ * Appends a float to an OSC packet header previously created by tosc_writeHeader
+ * at the position given by index.
+ * Returns the total number of bytes written in the whole packet.
+ */
+uint32_t tosc_headerAppendFloat(char *buffer, int index, const int len, float value);
+  
+/**
+ * Appends a const char* to an OSC packet header previously created by tosc_writeHeader
+ * at the position given by index.
+ * Returns the total number of bytes written in the whole packet.
+ */
+uint32_t tosc_headerAppendString(char *buffer, int index, const int len, const char* str);
+
+/*
+ *  Sends an osc message 
+ *  Returns 0 if correct, otherwise errno
+ */
+uint32_t tosc_sendOscMessage(char* oscBuffer, int oscBufferLenght, const char* localHostname, int localPort, const char* remoteHostname, int remotePort);
+
+  
 
 #ifdef __cplusplus
 }
